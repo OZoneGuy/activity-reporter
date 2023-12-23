@@ -18,13 +18,22 @@ func main() {
 	// setup MQTT client
 
 	var (
-		MQTT_BROKER = os.Getenv("MQTT_BROKER")
+		MQTT_BROKER = "mqtt://localhost:1883"
 		MQTT_USER   = os.Getenv("MQTT_USER")
 		MQTT_PASS   = os.Getenv("MQTT_PASS")
+		MQTT_CLIENT = "Linux-PC-Monitor"
 	)
 
+	if os.Getenv("MQTT_BROKER") != "" {
+		MQTT_BROKER = os.Getenv("MQTT_BROKER")
+	}
+
+	if os.Getenv("MQTT_CLIENT") != "" {
+		MQTT_CLIENT = os.Getenv("MQTT_CLIENT")
+	}
+
 	opts := mqtt.NewClientOptions().AddBroker(MQTT_BROKER)
-	opts.SetClientID("Linux-PC-Monitor")
+	opts.SetClientID(MQTT_CLIENT)
 	opts.SetUsername(MQTT_USER)
 	opts.SetPassword(MQTT_PASS)
 
