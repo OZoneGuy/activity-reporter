@@ -42,18 +42,20 @@ func main() {
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		fmt.Println("Failed to connect to MQTT broker")
 		panic(token.Error())
+	} else {
+		fmt.Println("Connected to MQTT broker")
 	}
 
 	signalChannel := make(chan os.Signal, 2)
 	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
-		sig := <-signalChannel
+		<-signalChannel
+		fmt.Println("Received an interrupt, cleaning...")
 		client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/PC_Monitor/state", 0, false, "PowerOff")
 		client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/availability", 0, false, "offline")
 		client.Disconnect(250)
-		fmt.Println(time.Now())
-		fmt.Println(sig)
-		fmt.Println("Exiting")
+
+		fmt.Println("Cleaned up, exiting...")
 		os.Exit(0)
 	}()
 
