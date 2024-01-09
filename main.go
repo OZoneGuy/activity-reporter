@@ -46,23 +46,19 @@ func main() {
 		fmt.Println("Connected to MQTT broker")
 	}
 
+	// publish monitor availability
+	continueSignal := make(chan bool, 1)
+	continueSignal <- true
+
 	signalChannel := make(chan os.Signal, 2)
-	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
-	go func() {
-		<-signalChannel
-		fmt.Println("Received an interrupt, cleaning...")
-		client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/PC_Monitor/state", 0, false, "PowerOff")
-		client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/availability", 0, false, "offline")
-		client.Disconnect(250)
-
-		fmt.Println("Cleaned up, exiting...")
-		os.Exit(0)
-	}()
-
+	signal.Notify(signalChannel, syscall.SIGINT, syscall.SIGALRM)
+	go handleSignal(client, signalChannel, continueSignal)
 	var err error
 	var isIdle bool
 	// idle.Get()
 	for err == nil {
+		// wait for a signal to continue the loop
+		<-continueSignal
 		isIdle, err = isInactive()
 
 		var value string
@@ -75,10 +71,14 @@ func main() {
 		client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/PC_Monitor/state", 0, false, value)
 		client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/availability", 0, false, "online")
 		time.Sleep(5 * time.Second)
+		// produce a signal to continue the loop
+		continueSignal <- true
 	}
 
 	if err != nil {
+		fmt.Println("Error while monitoring")
 		fmt.Println(err)
+		fmt.Println("Exiting...")
 	}
 }
 
@@ -102,4 +102,23 @@ func isInactive() (bool, error) {
 	}
 
 	return rep.State == 1, nil
+}
+
+func handleSignal(client mqtt.Client, signalChannel chan os.Signal, continueSignal chan bool) {
+	for signal := range signalChannel {
+		switch signal {
+		case syscall.SIGINT:
+			// consume the signal to stop the loop
+			<-continueSignal
+			fmt.Println("Received an interrupt, cleaning...")
+			client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/PC_Monitor/state", 0, false, "PowerOff")
+			client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/availability", 0, false, "offline")
+			client.Disconnect(250)
+		case syscall.SIGALRM:
+			fmt.Println("Got SIGALRM...")
+			fmt.Println("Restarting monitoring...")
+			// produce a signal to continue the loop
+			continueSignal <- true
+		}
+	}
 }
