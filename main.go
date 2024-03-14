@@ -39,6 +39,8 @@ func main() {
 
 	client := mqtt.NewClient(opts)
 
+	time.Sleep(10 * time.Second)
+
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		fmt.Println("Failed to connect to MQTT broker")
 		panic(token.Error())
