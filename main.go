@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/signal"
@@ -46,6 +47,16 @@ func main() {
 		panic(token.Error())
 	} else {
 		fmt.Println("Connected to MQTT broker")
+		fmt.Println("Publishing integration message")
+		configData, err := json.Marshal(configMsg())
+		if err != nil {
+			fmt.Println("Error while marshalling integration message")
+			panic(err)
+		}
+		token = client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/PC_Monitor/config", 0, true, configData)
+		token.Wait()
+		fmt.Println(token.Error())
+		fmt.Println("Config message published")
 	}
 
 	// publish monitor availability
@@ -122,5 +133,39 @@ func handleSignal(client mqtt.Client, signalChannel chan os.Signal, continueSign
 			// produce a signal to continue the loop
 			continueSignal <- true
 		}
+	}
+}
+
+func configMsg() interface{} {
+	type device struct {
+		Identifiers  string `json:"identifiers"`
+		Manufacturer string `json:"manufacturer"`
+		Model        string `json:"model"`
+		Name         string `json:"name"`
+		Sw_version   string `json:"sw_version"`
+	}
+
+	type config struct {
+		Availability_topic string `json:"availability_topic"`
+		Icon               string `json:"icon"`
+		Unique_id          string `json:"unique_id"`
+		Device             device `json:"device"`
+		Name               string `json:"name"`
+		State_topic        string `json:"state_topic"`
+	}
+
+	return config{
+		Availability_topic: "homeassistant/sensor/BIG-DISK-ENERGY/availability",
+		Icon:               "mdi:monitor",
+		Unique_id:          "b66cedc1-3c5a-4b79-b8d8-93a329bf5606",
+		Device: device{
+			Identifiers:  "hass.agent-BIG-DISK-ENERGY",
+			Manufacturer: "LAB02 Research",
+			Model:        "Microsoft Windows NT 10.0.22631.0",
+			Name:         "BIG-DISK-ENERGY",
+			Sw_version:   "2022.14.0",
+		},
+		Name:        "PC_Monitor",
+		State_topic: "homeassistant/sensor/BIG-DISK-ENERGY/PC_Monitor/state",
 	}
 }
