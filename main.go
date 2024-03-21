@@ -88,11 +88,9 @@ func main() {
 		continueSignal <- true
 	}
 
-	if err != nil {
-		fmt.Println("Error while monitoring")
-		fmt.Println(err)
-		fmt.Println("Exiting...")
-	}
+	fmt.Println("Error while monitoring")
+	fmt.Println(err)
+	fmt.Println("Exiting...")
 }
 
 func isInactive() (bool, error) {
