@@ -68,9 +68,9 @@ func main() {
 	go handleSignal(client, signalChannel, continueSignal)
 	var err error
 	var isIdle bool
-	// idle.Get()
 	for err == nil {
 		// wait for a signal to continue the loop
+		fmt.Println("Waiting for signal...")
 		<-continueSignal
 		isIdle, err = isInactive()
 
@@ -81,6 +81,7 @@ func main() {
 			value = "PowerOff"
 		}
 
+		fmt.Println("Publishing state...")
 		client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/PC_Monitor/state", 0, false, value)
 		client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/availability", 0, false, "online")
 		time.Sleep(5 * time.Second)
