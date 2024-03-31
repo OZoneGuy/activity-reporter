@@ -5,3 +5,5 @@ smart home automation. Based on [go-idle](https://github.com/ka2n/go-idle) and
 Only reads if the screen is on or off. Should be able to improve to detect if the PC is logged in or not.
 
 Lacks configuration.
+
+Testing PR for another project
