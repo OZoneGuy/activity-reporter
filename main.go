@@ -98,10 +98,10 @@ func main() {
 
 func isInactive() (bool, error) {
 	conn, err := xgb.NewConn()
+	defer conn.Close()
 	if err != nil {
 		return false, err
 	}
-	defer conn.Close()
 
 	info := xproto.Setup(conn)
 	screen := info.DefaultScreen(conn)
@@ -123,11 +123,10 @@ func handleSignal(client mqtt.Client, signalChannel chan os.Signal, continueSign
 		switch signal {
 		case syscall.SIGINT:
 			// consume the signal to stop the loop
-			<-continueSignal
 			fmt.Println("Received an interrupt, cleaning...")
-			client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/PC_Monitor/state", 0, false, "PowerOff")
-			client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/availability", 0, false, "offline")
-			client.Disconnect(250)
+			client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/PC_Monitor/state", 0, true, "PowerOff")
+			client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/availability", 0, true, "offline")
+			<-continueSignal
 		case syscall.SIGALRM:
 			fmt.Println("Got SIGALRM...")
 			fmt.Println("Restarting monitoring...")
