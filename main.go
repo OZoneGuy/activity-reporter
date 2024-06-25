@@ -40,6 +40,7 @@ func main() {
 
 	client := mqtt.NewClient(opts)
 
+	// TODO: Replace sleep with a loop and a timeout
 	time.Sleep(10 * time.Second)
 
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
@@ -61,6 +62,7 @@ func main() {
 
 	// publish monitor availability
 	continueSignal := make(chan bool, 1)
+	// Giving initial value to start the cycle
 	continueSignal <- true
 
 	signalChannel := make(chan os.Signal, 2)
@@ -68,13 +70,13 @@ func main() {
 	go handleSignal(client, signalChannel, continueSignal)
 	var err error
 	var isIdle bool
+	var value string
 	for err == nil {
 		// wait for a signal to continue the loop
 		fmt.Println("Waiting for signal...")
 		<-continueSignal
 		isIdle, err = isInactive()
 
-		var value string
 		if !isIdle {
 			value = "PowerOn"
 		} else {
