@@ -85,7 +85,7 @@ func main() {
 
 		fmt.Println("Publishing state...")
 		client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/PC_Monitor/state", 0, false, value)
-		client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/availability", 0, false, "online")
+		client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/availability", 0, true, "online")
 		time.Sleep(5 * time.Second)
 		// produce a signal to continue the loop
 		continueSignal <- true
