@@ -72,7 +72,7 @@ func main() {
 	var isIdle bool
 	var value string
 	for err == nil {
-		// wait for a signal to continue the loop
+		// Wait for a signal to continue the loop
 		fmt.Println("Waiting for signal...")
 		<-continueSignal
 		isIdle, err = isInactive()
@@ -87,7 +87,7 @@ func main() {
 		client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/PC_Monitor/state", 0, false, value)
 		client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/availability", 0, true, "online")
 		time.Sleep(5 * time.Second)
-		// produce a signal to continue the loop
+		// Produce a signal to continue the loop
 		continueSignal <- true
 	}
 
@@ -98,10 +98,13 @@ func main() {
 
 func isInactive() (bool, error) {
 	conn, err := xgb.NewConn()
-	defer conn.Close()
 	if err != nil {
+		if conn != nil {
+			conn.Close()
+		}
 		return false, err
 	}
+	defer conn.Close()
 
 	info := xproto.Setup(conn)
 	screen := info.DefaultScreen(conn)
@@ -120,9 +123,10 @@ func isInactive() (bool, error) {
 
 func handleSignal(client mqtt.Client, signalChannel chan os.Signal, continueSignal chan bool) {
 	for signal := range signalChannel {
+		fmt.Printf("Received signal: %v", signal)
 		switch signal {
 		case syscall.SIGINT:
-			// consume the signal to stop the loop
+			// Consume the signal to stop the loop
 			fmt.Println("Received an interrupt, cleaning...")
 			client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/PC_Monitor/state", 0, true, "PowerOff")
 			client.Publish("homeassistant/sensor/BIG-DISK-ENERGY/availability", 0, true, "offline")
@@ -130,7 +134,7 @@ func handleSignal(client mqtt.Client, signalChannel chan os.Signal, continueSign
 		case syscall.SIGALRM:
 			fmt.Println("Got SIGALRM...")
 			fmt.Println("Restarting monitoring...")
-			// produce a signal to continue the loop
+			// Produce a signal to continue the loop
 			continueSignal <- true
 		}
 	}
